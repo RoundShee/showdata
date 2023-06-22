@@ -5,18 +5,52 @@ import sys
 
 def choice_0(screen, bg_color):
     """choice_0为二级菜单的操作"""
-    # 我想左上角显示一个文本框，输入当前柱子的高度
-    # 空格进行下一个切换
-    # 退格进行删除 删到空白 就回到上一个柱子
-    # 每个柱子输入数字后 立即显示 并且根据非空数据判断有多少
-    # 回车后进入下一步操作
-    numbers = get_nums_display(screen, bg_color)
-    # 接着就是开始排序
-    # 这其中涉及到 怎样一步一步的走，交换的动画，选中的高亮
-    # 不如设计一个类：基础参数：数值、序号、位置、
-    #              被选中的高亮
-    #              排完没排的状态
-    #              方法： 交换的动画
+    # 接收数据——可视化
+    numbers_plus = get_nums_display(screen, bg_color)
+    # 接着就是魔法
+    total = len(numbers_plus)
+    for i in range(total):
+        # 统统变灰
+        numbers_plus[i].select(0)
+    refresh_wait(screen, bg_color, numbers_plus, total, 90)
+    # 开始冒泡
+    for i in range(total-1):
+        for j in range(total-1-i):
+            # 选中动画显示
+            numbers_plus[j].select()
+            refresh_wait(screen, bg_color, numbers_plus, total, 120)
+            numbers_plus[j+1].select()
+            refresh_wait(screen, bg_color, numbers_plus, total, 120)
+            if numbers_plus[j].num > numbers_plus[j+1].num:
+                temp = numbers_plus[j]
+                numbers_plus[j] = numbers_plus[j+1]
+                numbers_plus[j+1] = temp
+                temp = numbers_plus[j].bar_x
+                numbers_plus[j].change_bar_x(numbers_plus[j + 1].bar_x)
+                numbers_plus[j + 1].change_bar_x(temp)
+                temp = numbers_plus[j].text_x
+                numbers_plus[j].change_text_x(numbers_plus[j + 1].text_x)
+                numbers_plus[j + 1].change_text_x(temp)
+            numbers_plus[j].select(0)
+            numbers_plus[j + 1].select(0)
+            numbers_plus[total-i-1].done()
+            refresh_wait(screen, bg_color, numbers_plus, total, 120)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_ESCAPE:
+                    return 0
+
+
+def refresh_wait(screen, bg_color, numbers_plus, total, wait_time):
+    """临时用用 刷新变化"""
+    screen.fill(bg_color)
+    for k in range(total):
+        numbers_plus[k].blit(screen)
+    pygame.display.flip()
+    pygame.time.delay(wait_time)
 
 
 def get_nums_display(screen, bg_color):
@@ -27,7 +61,7 @@ def get_nums_display(screen, bg_color):
     font_num = pygame.font.Font('./misc/Alimama_DongFangDaKai_Regular.ttf', 20)
     input_text = ""
     numbers = []
-
+    numbers_plus = []
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -57,7 +91,7 @@ def get_nums_display(screen, bg_color):
                 elif event.key == pygame.K_RETURN:
                     # Enter 键
                     if numbers:
-                        return numbers
+                        return numbers_plus
                 else:
                     # 其他按键
                     input_text += event.unicode
@@ -68,7 +102,8 @@ def get_nums_display(screen, bg_color):
 
         text_surface = font_num.render("已存序列: " + ", ".join(map(str, numbers)), True, (0, 0, 0))
         screen.blit(text_surface, (10, 480))
-        draw_bar(numbers, screen)
+        numbers_plus = draw_bar(numbers, screen)
+        # 刷新
         pygame.display.flip()
         clock.tick(45)
 
@@ -84,6 +119,7 @@ def get_color_for_value(value, max_value):
 def draw_bar(numbers, screen):
     # 柱形图显示
     if numbers:
+        # numbers非空才执行
         num_bars = len(numbers)
         max_value = max(numbers)  # 获取数据中的最大值
         bar_spacing = 10  # 柱形之间的间距
@@ -95,17 +131,65 @@ def draw_bar(numbers, screen):
         else:
             bar_width = (screen_rect.width - (num_bars + 1) * bar_spacing) / num_bars
 
-        # 绘制每个柱形
+        # 绘制每个柱,形成对象
+        numbers_plus = []
         for i in range(num_bars):
+            # 一些 油条bar 的参数计算
             bar_height = int((numbers[i] / max_value) * (screen_rect.height - 250))  # 根据数据值计算柱形的高度
             bar_x = (screen_rect.width - bar_width) // 2 + (i - num_bars / 2) * (bar_width + bar_spacing)
             bar_y = screen_rect.height - 90 - bar_height  # 计算柱形的 y 坐标位置
-
             color = get_color_for_value(numbers[i], max_value)  # 根据数据值获取颜色
-            pygame.draw.rect(screen, color, (bar_x, bar_y, bar_width, bar_height))
-
-            # 显示数值大小
+            # 上面的数字
             font = pygame.font.Font(None, 24)
             text = font.render(str(numbers[i]), True, (0, 0, 0))
             text_rect = text.get_rect(center=(bar_x + bar_width / 2, bar_y - 20))
-            screen.blit(text, text_rect)
+            fritter = Fritters(numbers[i], color, (bar_x, bar_y, bar_width, bar_height), text, text_rect)
+            fritter.blit(screen)
+            numbers_plus.append(fritter)
+        return numbers_plus
+
+
+class Fritters:
+    """带数字的五彩斑斓的油条"""
+    def __init__(self, num, color, bar_rect, text, text_rect):
+        self.num = num
+        self.color = color
+        self.bar_rect = bar_rect  # (bar_x, bar_y, bar_width, bar_height)
+        (self.bar_x, self.bar_y, self.bar_width, self.bar_height) = bar_rect
+        self.text = text
+        self.text_rect = text_rect  # 用于后期交换
+        (self.text_x, self.text_y, self.text_width, self.text_height) = text_rect
+        # 一些状态
+        self.sorted = 0
+        self.selected = 0
+        self.shifting = (0, 0)
+
+    def blit(self, screen):
+        """给我屏幕，直接贴油条 饿"""
+        pygame.draw.rect(screen, self.color, self.bar_rect)  # 油条
+        screen.blit(self.text, self.text_rect)  # 数字
+
+    def select(self, selected=1):
+        """更新被选中的状态"""
+        if selected:
+            self.selected = 1
+            self.color = (0, 205, 0)  # 绿色
+        else:
+            self.selected = 0
+            self.color = (190, 190, 190)  # 灰色
+
+    def done(self, done=1):
+        """更新 排序完成"""
+        if done:
+            self.sorted = 1
+            self.color = (255, 215, 0)  # 金色
+        else:
+            self.sorted = 0
+            self.color = (190, 190, 190)  # 灰色
+    def change_bar_x(self, new_x):
+        self.bar_x = new_x
+        self.bar_rect = (self.bar_x, self.bar_y, self.bar_width, self.bar_height)
+
+    def change_text_x(self, new_x):
+        self.text_x = new_x
+        self.text_rect = (self.text_x, self.text_y, self.text_width, self.text_height)
