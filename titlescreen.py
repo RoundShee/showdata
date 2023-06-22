@@ -4,8 +4,9 @@ import pygame
 class Title:
 
     """Title具有设置主页面所有显示的功能"""
-    def __init__(self, screen):
+    def __init__(self, screen, bg_color):
         self.screen = screen
+        self.bg_color = bg_color
 
         # 列出想用的字体
         font_title = pygame.font.Font('./misc/Alimama_DongFangDaKai_Regular.ttf', 30)
@@ -30,7 +31,6 @@ class Title:
         self.choice_i = 0
         self.arrow_rect_top = 81
         self.arrow_rect_left = 512 - self.text_sub1_rect.width/2.0 - self.arrow_rect.width
-        print("初始化对象完成")
 
     """页面字体显示"""
     def show_title(self):
@@ -49,21 +49,19 @@ class Title:
             self.choice_i = 0
         else:
             self.choice_i += 1
-        print("choice加一")
         self.arrow_rect_top = self.choice[self.choice_i]
-
+        return self.choice_i
     """将指针向上循环移动"""
     def choice_previous(self):
         if self.choice_i == 0:
             self.choice_i = 2
         else:
             self.choice_i -= 1
-        print("choice减一")
         self.arrow_rect_top = self.choice[self.choice_i]
-
+        return self.choice_i
     """手动刷新screen"""
     def all_blit(self):
-        self.screen.fill((230, 230, 230))
+        self.screen.fill(self.bg_color)
         self.show_title()
         self.screen.blit(self.arrow, ((self.arrow_rect_left, self.arrow_rect_top), (self.arrow_rect.width, self.arrow_rect.height)))
 
