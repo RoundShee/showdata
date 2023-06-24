@@ -5,43 +5,122 @@ import sys
 
 def choice_0(screen, bg_color):
     """choice_0为二级菜单的操作"""
-    # 接收数据——可视化
-    numbers_plus = get_nums_display(screen, bg_color)
-    # 接着就是魔法
+    in_choice_0 = 1  # 处在当前choice_0的信号
+    numbers = []
+    # 在当前菜单的操作
+    while in_choice_0:
+        # 接收数据——可视化
+        numbers = get_nums_display(screen, bg_color, numbers)
+        if numbers == -1:
+            in_choice_0 = 0
+        # 接着就是魔法
+        not_back = 1  # 处在冒泡排序状态不返回编辑状态的信号
+        while in_choice_0 and not_back:
+            # numbers_plus = numbers_plus_bak[:]  # 绝了，浅拷贝
+            # numbers_plus = copy.deepcopy(numbers_plus_bak)  # 太难了吧，类拷贝存在问题
+            numbers_plus = draw_bar(numbers, screen)  # 折衷方案：重绘 但此处存在资源的浪费
+            not_back = start_bubble(screen, bg_color, numbers_plus)
+
+
+def start_bubble(screen, bg_color, numbers_plus):
+    """开始冒泡排序的操作，输入的numbers_plus应为副本
+        此方法包含暂停，继续以及 重启的返回信号
+        运行完毕自行等待"""
+    not_back = 1
     total = len(numbers_plus)
     for i in range(total):
         # 统统变灰
         numbers_plus[i].select(0)
     refresh_wait(screen, bg_color, numbers_plus, total, 90)
-    # 开始冒泡
-    for i in range(total-1):
-        for j in range(total-1-i):
-            # 选中动画显示
-            numbers_plus[j].select()
-            refresh_wait(screen, bg_color, numbers_plus, total, 120)
-            numbers_plus[j+1].select()
-            refresh_wait(screen, bg_color, numbers_plus, total, 120)
-            if numbers_plus[j].num > numbers_plus[j+1].num:
-                temp = numbers_plus[j]
-                numbers_plus[j] = numbers_plus[j+1]
-                numbers_plus[j+1] = temp
-                temp = numbers_plus[j].bar_x
-                numbers_plus[j].change_bar_x(numbers_plus[j + 1].bar_x)
-                numbers_plus[j + 1].change_bar_x(temp)
-                temp = numbers_plus[j].text_x
-                numbers_plus[j].change_text_x(numbers_plus[j + 1].text_x)
-                numbers_plus[j + 1].change_text_x(temp)
-            numbers_plus[j].select(0)
-            numbers_plus[j + 1].select(0)
-            numbers_plus[total-i-1].done()
-            refresh_wait(screen, bg_color, numbers_plus, total, 120)
-    while True:
+    decision = 1
+    go_into_bulbing = 1
+    while decision:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
             elif event.type == pygame.KEYUP:
-                if event.key == pygame.K_ESCAPE:
-                    return 0
+                if event.key == pygame.K_SPACE:
+                    decision = not decision
+                elif event.key == pygame.K_ESCAPE:
+                    # 回到实时显示编辑模式
+                    decision = not decision
+                    go_into_bulbing = 0
+                    not_back = 0
+    if go_into_bulbing:
+        # 开始冒泡
+        for i in range(total - 1):
+            for j in range(total - 1 - i):
+                if pause_wait():  # 可控暂停以及重启
+                    return not_back
+                # 选中动画显示
+                numbers_plus[j].select()
+                refresh_wait(screen, bg_color, numbers_plus, total, 120)
+                if pause_wait():  # 可控暂停以及重启
+                    return not_back
+                numbers_plus[j + 1].select()
+                refresh_wait(screen, bg_color, numbers_plus, total, 120)
+                if pause_wait():  # 可控暂停以及重启
+                    return not_back
+                if numbers_plus[j].num > numbers_plus[j + 1].num:
+                    swap_cartoon(screen, bg_color, numbers_plus, total, j, j+1)
+                numbers_plus[j].select(0)
+                numbers_plus[j + 1].select(0)
+                refresh_wait(screen, bg_color, numbers_plus, total, 120)
+                if pause_wait():  # 可控暂停以及重启
+                    return not_back
+            numbers_plus[total - i - 1].done()
+        # 最后上色done
+        numbers_plus[0].done()
+        numbers_plus[1].done()
+        refresh_wait(screen, bg_color, numbers_plus, total, 10)
+        finish = 1
+        while finish:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+                elif event.type == pygame.KEYUP:
+                    if event.key == pygame.K_ESCAPE:
+                        finish = 0  # 回到重绘那里重新开始
+        return not_back
+
+
+def swap_cartoon(screen, bg_color, numbers_plus, total, a, b):
+    """将i,j进行互换的10帧动画"""
+    every_move = (numbers_plus[a].bar_x - numbers_plus[b].bar_x)/10.0
+    # 动画效果 的 显示交换
+    for i in range(10):
+        numbers_plus[a].translate_x(numbers_plus[a].bar_x - every_move)
+        numbers_plus[b].translate_x(numbers_plus[b].bar_x + every_move)
+        refresh_wait(screen, bg_color, numbers_plus, total, 20)
+    # 顺序交换
+    temp = numbers_plus[a]
+    numbers_plus[a] = numbers_plus[b]
+    numbers_plus[b] = temp
+
+
+def pause_wait(pause=0):
+    """用于冒泡排序中及时接收用户操作判断是否暂停
+        且在暂停状态下可以判断是否退出或重启"""
+    signal = 0
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            sys.exit()
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_SPACE:
+                pause = not pause
+    while pause:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_SPACE:
+                    # 暂停排序
+                    pause = not pause
+                elif event.key == pygame.K_ESCAPE:
+                    # 重启排序
+                    signal = 1
+                    pause = not pause
+    return signal
 
 
 def refresh_wait(screen, bg_color, numbers_plus, total, wait_time):
@@ -53,15 +132,16 @@ def refresh_wait(screen, bg_color, numbers_plus, total, wait_time):
     pygame.time.delay(wait_time)
 
 
-def get_nums_display(screen, bg_color):
-    """用于输入阶段的实时显示"""
+def get_nums_display(screen, bg_color, numbers):
+    """用于输入阶段的实时显示
+        调用draw_bar将自身的数据及提示最终呈现
+        且有接收已有numbers的功能，返回numbers的功能，可以重新对数据进行编辑
+        具有退出编辑的信号返回-1，在choice_0用于退出子菜单"""
     clock = pygame.time.Clock()
 
     # 数字显示
     font_num = pygame.font.Font('./misc/Alimama_DongFangDaKai_Regular.ttf', 20)
     input_text = ""
-    numbers = []
-    numbers_plus = []
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -91,7 +171,10 @@ def get_nums_display(screen, bg_color):
                 elif event.key == pygame.K_RETURN:
                     # Enter 键
                     if numbers:
-                        return numbers_plus
+                        return numbers
+                elif event.key == pygame.K_ESCAPE:
+                    # 退出到主菜单的返回值
+                    return -1
                 else:
                     # 其他按键
                     input_text += event.unicode
@@ -102,13 +185,15 @@ def get_nums_display(screen, bg_color):
 
         text_surface = font_num.render("已存序列: " + ", ".join(map(str, numbers)), True, (0, 0, 0))
         screen.blit(text_surface, (10, 480))
-        numbers_plus = draw_bar(numbers, screen)
+        draw_bar(numbers, screen)
         # 刷新
         pygame.display.flip()
         clock.tick(45)
 
 
 def get_color_for_value(value, max_value):
+    """提升外观的函数
+        目前存在问题，负数会出问题"""
     normalized_value = value / max_value
     r = int(normalized_value * 255)
     g = 0
@@ -117,13 +202,15 @@ def get_color_for_value(value, max_value):
 
 
 def draw_bar(numbers, screen):
+    """根据已有numbers智能判断每一个柱子(fritter)的数据，
+        进行实例化对象，并blit"""
     # 柱形图显示
     if numbers:
         # numbers非空才执行
         num_bars = len(numbers)
         max_value = max(numbers)  # 获取数据中的最大值
         bar_spacing = 10  # 柱形之间的间距
-        bar_width = 20  # 默认宽度
+        # bar_width = 20  # 默认宽度
         screen_rect = screen.get_rect()  # 为了同一调度，再次解算屏幕宽度
         bar_width_temp = (screen_rect.width - (num_bars + 1) * bar_spacing) / num_bars
         if bar_width_temp > 20:
@@ -140,7 +227,7 @@ def draw_bar(numbers, screen):
             bar_y = screen_rect.height - 90 - bar_height  # 计算柱形的 y 坐标位置
             color = get_color_for_value(numbers[i], max_value)  # 根据数据值获取颜色
             # 上面的数字
-            font = pygame.font.Font(None, 24)
+            font = pygame.font.Font('./misc/Alimama_DongFangDaKai_Regular.ttf', 12)
             text = font.render(str(numbers[i]), True, (0, 0, 0))
             text_rect = text.get_rect(center=(bar_x + bar_width / 2, bar_y - 20))
             fritter = Fritters(numbers[i], color, (bar_x, bar_y, bar_width, bar_height), text, text_rect)
@@ -150,7 +237,9 @@ def draw_bar(numbers, screen):
 
 
 class Fritters:
-    """带数字的五彩斑斓的油条"""
+    """带数字的五彩斑斓的油条
+        具有自身数据的值,颜色,柱形的rect,头顶文字的rect
+        以及配备将其blit的方法,改变状态的方法,进行平移的方法"""
     def __init__(self, num, color, bar_rect, text, text_rect):
         self.num = num
         self.color = color
@@ -186,10 +275,18 @@ class Fritters:
         else:
             self.sorted = 0
             self.color = (190, 190, 190)  # 灰色
+
     def change_bar_x(self, new_x):
+        """平移柱子 只是柱子"""
         self.bar_x = new_x
         self.bar_rect = (self.bar_x, self.bar_y, self.bar_width, self.bar_height)
 
     def change_text_x(self, new_x):
+        """平移上面的 数字"""
         self.text_x = new_x
         self.text_rect = (self.text_x, self.text_y, self.text_width, self.text_height)
+
+    def translate_x(self, new_x):
+        """一步整体移动"""
+        self.change_bar_x(new_x)
+        self.change_text_x(new_x)
