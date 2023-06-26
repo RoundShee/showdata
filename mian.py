@@ -1,7 +1,8 @@
 import sys
 import pygame
 from titlescreen import Title
-from choice_0 import choice_0
+from basesort.choice_0 import choice_0
+from basesort.selectsort import select_sort
 
 
 def main():
@@ -25,6 +26,8 @@ def main():
                 if event.key == pygame.K_RETURN:
                     if choice_i == 0:
                         choice_0(screen, bg_color)
+                    elif choice_i == 1:
+                        select_sort(screen, bg_color)
                     print('我没想好')
             title.all_blit()
             pygame.display.flip()
