@@ -18,9 +18,9 @@ class Title:
 
         self.text_sub1 = font_sub.render('①冒泡排序', True, (0, 0, 0))
         self.text_sub1_rect = self.text_sub1.get_rect()
-        self.text_sub2 = font_sub.render('②插入排序', True, (0, 0, 0))
+        self.text_sub2 = font_sub.render('②选择排序', True, (0, 0, 0))
         self.text_sub2_rect = self.text_sub2.get_rect()
-        self.text_sub3 = font_sub.render('③选择排序', True, (0, 0, 0))
+        self.text_sub3 = font_sub.render('③插入排序', True, (0, 0, 0))
         self.text_sub3_rect = self.text_sub3.get_rect()
 
         # 动画选择

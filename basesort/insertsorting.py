@@ -3,8 +3,8 @@ import sys
 from basesort.barmethods import draw_bar, get_nums_display, refresh_wait, pause_wait, swap_cartoon
 
 
-def select_sort(screen, bg_color):
-    """选择排序，把最小打个标签，放到最前面"""
+def insert_sort(screen, bg_color):
+    """插入排序：需要制作显示列表和实际列表，显示列表"""
     in_choice_0 = 1  # 处在当前choice_0的信号
     numbers = []
     # 在当前菜单的操作
@@ -46,35 +46,30 @@ def start_select_sort(screen, bg_color, numbers_plus):
                     decision = not decision
                     go_into_sort = 0
                     not_back = 0
+    screen_rect = screen.get_rect()
     if go_into_sort:
         # 开始
-        for i in range(total - 1):
-            select_min = i  # 最小标签打上
-            numbers_plus[i].long_select()
-            for j in range(i+1, total):
-                if pause_wait():  # 可控暂停以及重启
-                    return not_back
+        for i in range(total):
+            numbers_plus[i].translate_y('UP', screen_rect.height)
+        for i in range(1, total):
+            who = i
+            numbers_plus[i].translate_y('DOWN', screen_rect.height)
+            numbers_plus[i].long_select()  # 变红
+            refresh_wait(screen, bg_color, numbers_plus, total, 120)
+            if pause_wait():  # 可控暂停以及重启
+                return not_back
+            for j in range(i-1, -1, -1):
                 # 选中动画显示
                 numbers_plus[j].select()  # 变绿
                 refresh_wait(screen, bg_color, numbers_plus, total, 120)
                 if pause_wait():  # 可控暂停以及重启
                     return not_back
-                if numbers_plus[select_min].num > numbers_plus[j].num:
-                    numbers_plus[j].long_select()  # 变红
-                    numbers_plus[select_min].long_select(0)  # 变灰
-                    select_min = j
-                else:
-                    numbers_plus[j].select(0)
-                refresh_wait(screen, bg_color, numbers_plus, total, 120)
-                if pause_wait():  # 可控暂停以及重启
-                    return not_back
-            if i != select_min:
-                swap_cartoon(screen, bg_color, numbers_plus, total, i, select_min)
-                refresh_wait(screen, bg_color, numbers_plus, total, 120)
-            numbers_plus[i].done()
+                if numbers_plus[j].num > numbers_plus[who].num:
+                    swap_cartoon(screen, bg_color, numbers_plus, total, who, j)
+                    who = j
+            numbers_plus[who].translate_y('UP', screen_rect.height)
+            numbers_plus[i-1].done()
             refresh_wait(screen, bg_color, numbers_plus, total, 60)
-        numbers_plus[total-1].done()
-        refresh_wait(screen, bg_color, numbers_plus, total, 60)
         finish = 1
         while finish:
             for event in pygame.event.get():

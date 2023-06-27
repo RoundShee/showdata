@@ -42,9 +42,7 @@ def swap_cartoon(screen, bg_color, numbers_plus, total, a, b):
         numbers_plus[b].translate_x(numbers_plus[b].bar_x + every_move)
         refresh_wait(screen, bg_color, numbers_plus, total, 20)
     # 顺序交换
-    temp = numbers_plus[a]
-    numbers_plus[a] = numbers_plus[b]
-    numbers_plus[b] = temp
+    numbers_plus[a], numbers_plus[b] = numbers_plus[b], numbers_plus[a]
 
 
 def pause_wait(pause=0):
@@ -201,7 +199,7 @@ class Fritters:
         # 一些状态
         self.sorted = 0
         self.selected = 0
-        self.shifting = (0, 0)
+        self.shifted = 0
 
     def blit(self, screen):
         """给我屏幕，直接贴油条 饿"""
@@ -258,3 +256,26 @@ class Fritters:
         """一步整体移动"""
         self.change_bar_x(new_x)
         self.change_text_x(new_x)
+
+    def translate_y(self, direction, screen_height):
+        """向上还是向下移动"""
+        if direction == 'UP':
+            if self.shifted:  # 从下面直接插入序列
+                self.bar_y = self.bar_y - screen_height/2.0
+                self.bar_rect = (self.bar_x, self.bar_y, self.bar_width, self.bar_height)
+                self.text_y = self.text_y - screen_height/2.0
+                self.text_rect = (self.text_x, self.text_y, self.text_width, self.text_height)
+            else:   # 开始的向上
+                self.bar_y = self.bar_y - screen_height / 4.0
+                self.bar_rect = (self.bar_x, self.bar_y, self.bar_width, self.bar_height)
+                self.text_y = self.text_y - screen_height / 4.0
+                self.text_rect = (self.text_x, self.text_y, self.text_width, self.text_height)
+                self.shifted = 1
+        elif direction == 'DOWN':
+            if self.shifted:
+                self.bar_y = self.bar_y + screen_height/2
+                self.bar_rect = (self.bar_x, self.bar_y, self.bar_width, self.bar_height)
+                self.text_y = self.text_y + screen_height/2
+                self.text_rect = (self.text_x, self.text_y, self.text_width, self.text_height)
+            else:
+                print("ERROR")
