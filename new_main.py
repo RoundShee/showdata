@@ -2,7 +2,6 @@ import sys
 import pygame
 import threading
 import queue
-from multiprocessing import Pipe
 
 
 def main():
@@ -13,13 +12,16 @@ def main():
     screen = pygame.display.set_mode(screen_size, pygame.RESIZABLE, 32)  # 可调节窗口
     bg_color = (230, 230, 230)
     push_windows = queue.Queue(maxsize=1)
+    # event传递
+    pygame_event = queue.Queue(maxsize=20)
     # 通信-获得菜单的操作
     get_operation = queue.Queue(maxsize=1)
-    my_menu = threading.Thread(target=menu, args=(get_operation, push_windows))
+    my_menu = threading.Thread(target=menu, args=(get_operation, push_windows, pygame_event))
     my_menu.daemon = True
     my_menu.start()
     while True:
         event = pygame.event.wait()
+        pygame_event.put(event)
         if event.type == pygame.QUIT:
             sys.exit()
         if event.type == pygame.VIDEORESIZE:
@@ -47,7 +49,7 @@ def main():
         pygame.display.update([(140, 0, screen_width-140, screen_height), (0, 0, 140, screen_height/2.0)])
 
 
-def menu(get_operation, push_windows):
+def menu(get_operation, push_windows, pygame_event):
     # 预留自定义
     menu_font = pygame.font.Font('./misc/Alimama_DongFangDaKai_Regular.ttf', 25)
     menu_text_raw = ["冒泡排序", "选择排序", "插入排序", "堆排序"]
@@ -62,7 +64,7 @@ def menu(get_operation, push_windows):
     # 准备与鼠标检测的通信
     mouse_test_q = queue.Queue(maxsize = 1)
     # 创建线程
-    choose_menu = threading.Thread(target=mouse_test, args=(get_operation, mouse_test_q))
+    choose_menu = threading.Thread(target=mouse_test, args=(get_operation, mouse_test_q, pygame_event))
     choose_menu.daemon = True
     choose_menu.start()
     while True:
@@ -76,37 +78,38 @@ def menu(get_operation, push_windows):
         pygame.display.update((0, screen_height/2.0, 140, screen_height/2.0))
 
 
-def mouse_test(get_operation, mouse_test_q):
+def mouse_test(get_operation, mouse_test_q, pygame_event):
     flag_down = 0
     flag_up = 0
     while True:
         screen_height, how_many, two_space, height = mouse_test_q.get()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                sys.exit()
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                x, y = pygame.mouse.get_pos()
-                print(x, y)
-                for i in range(how_many):
-                    if (40 < x < 140) and ((screen_height/2.0+(how_many-i)*(height+two_space)) < y < (screen_height/2.0
+        event = pygame_event.get()
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            x, y = event.pos  # pygame.mouse.get_pos()
+            for i in range(how_many):
+                if (40 < x < 140) and ((screen_height/2.0+(how_many-i)*(height+two_space)) < y < (screen_height/2.0
                                                                                                       +
                                                                                                       (how_many-i+1) *
                                                                                                       (height+two_space))):
-                        flag_down = i + 1
-                    else:
-                        flag_down = 0
-            elif event.type == pygame.MOUSEBUTTONUP:
-                x, y = pygame.mouse.get_pos()
-                print(x, y)
-                for i in range(how_many):
-                    if (40 < x < 140) and ((screen_height/2.0+(how_many-i)*(height+two_space)) < y < (screen_height/2.0 +
+                    flag_down = i + 1
+                    break
+                else:
+                    flag_down = 0
+        if event.type == pygame.MOUSEBUTTONUP:
+            x, y = event.pos  # pygame.mouse.get_pos()
+            for i in range(how_many):
+                if (40 < x < 140) and ((screen_height/2.0+(how_many-i)*(height+two_space)) < y < (screen_height/2.0 +
                                                                                                       (how_many-i+1) *
                                                                                                       (height+two_space))):
-                        flag_up = i + 1
-                    else:
-                        flag_up = 0
-            if flag_up == flag_down:
-                get_operation.put(flag_up)
+                    flag_up = i + 1
+                    break
+                else:
+                    flag_up = 0
+
+        if flag_up == flag_down:
+            get_operation.put(int(flag_up))
+        else:
+            get_operation.put(0)
 
 
 if __name__ == "__main__":
