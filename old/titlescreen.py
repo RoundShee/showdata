@@ -9,8 +9,8 @@ class Title:
         self.bg_color = bg_color
 
         # 列出想用的字体
-        font_title = pygame.font.Font('./misc/Alimama_DongFangDaKai_Regular.ttf', 30)
-        font_sub = pygame.font.Font('./misc/Alimama_DongFangDaKai_Regular.ttf', 25)
+        font_title = pygame.font.Font('../misc/Alimama_DongFangDaKai_Regular.ttf', 30)
+        font_sub = pygame.font.Font('../misc/Alimama_DongFangDaKai_Regular.ttf', 25)
 
         # 文字设置
         self.text_title = font_title.render("排序可视化", True, (0, 0, 0))
@@ -24,7 +24,7 @@ class Title:
         self.text_sub3_rect = self.text_sub3.get_rect()
 
         # 动画选择
-        self.arrow = pygame.image.load('./misc/arrow.png')
+        self.arrow = pygame.image.load('../misc/arrow.png')
         self.arrow_rect = self.arrow.get_rect()
 
         self.choice = [81, 131, 171]
@@ -61,7 +61,7 @@ class Title:
         return self.choice_i
     """手动刷新screen"""
     def all_blit(self):
-        self.screen.fill(self.bg_color)
+        self.screen.fill(self.bg_color, (0, 18, 1024, 494))
         self.show_title()
         self.screen.blit(self.arrow, ((self.arrow_rect_left, self.arrow_rect_top), (self.arrow_rect.width, self.arrow_rect.height)))
 

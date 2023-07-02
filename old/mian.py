@@ -1,9 +1,11 @@
 import sys
 import pygame
+import threading
 from titlescreen import Title
 from basesort.choice_0 import choice_0
 from basesort.selectsort import select_sort
 from basesort.insertsorting import insert_sort
+from mouse.mouse import mouse
 
 
 def main():
@@ -15,6 +17,9 @@ def main():
     title = Title(screen, bg_color)
     title.show_title()
     choice_i = 0
+    mouse_menu = threading.Thread(target=mouse, args=(screen, bg_color))
+    mouse_menu.daemon = True
+    mouse_menu.start()
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -31,8 +36,9 @@ def main():
                         select_sort(screen, bg_color)
                     elif choice_i == 2:
                         insert_sort(screen, bg_color)
+            # mouse(screen, bg_color)
             title.all_blit()
-            pygame.display.flip()
+            pygame.display.update((0, 18, 1024, 494))
 
 
 main()
