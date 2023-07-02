@@ -69,9 +69,10 @@ def menu(get_operation, push_windows):
         # 从上一级获取窗口大小进行解算位置信息
         screen, bg_color, screen_height = push_windows.get()
         mouse_test_q.put((screen_height, how_many, two_space, height))
+        screen.fill(bg_color, (0, screen_height/2.0, 140, screen_height/2.0))  # 用于后期做动画
         for i in range(how_many):
             screen.blit(menu_text[i], (40, screen_height/2.0+(how_many-i)*(height+two_space)))
-        screen.fill(bg_color, (0, screen_height/2.0, 140, screen_height/2.0))  # 用于后期做动画
+
         pygame.display.update((0, screen_height/2.0, 140, screen_height/2.0))
 
 
