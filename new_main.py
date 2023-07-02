@@ -2,6 +2,9 @@ import sys
 import pygame
 import threading
 import queue
+from basesort.choice_0 import choice_0
+from basesort.selectsort import select_sort
+from basesort.insertsorting import insert_sort
 
 
 def main():
@@ -13,7 +16,7 @@ def main():
     bg_color = (230, 230, 230)
     push_windows = queue.Queue(maxsize=1)
     # event传递
-    pygame_event = queue.Queue(maxsize=20)
+    pygame_event = queue.Queue(maxsize=1)
     # 通信-获得菜单的操作
     get_operation = queue.Queue(maxsize=1)
     my_menu = threading.Thread(target=menu, args=(get_operation, push_windows, pygame_event))
@@ -39,10 +42,13 @@ def main():
         which_one = get_operation.get()
         if which_one == 1:
             print('1可用')
+            choice_0(screen, bg_color)
         elif which_one == 2:
             print('2可用')
+            select_sort(screen, bg_color)
         elif which_one == 3:
             print('3可用')
+            insert_sort(screen, bg_color)
         elif which_one == 4:
             print('4可以同')
         # 区域刷新，目前仅有一块为菜单多线程刷新
@@ -62,7 +68,7 @@ def menu(get_operation, push_windows, pygame_event):
     two_space = 30
     height = (menu_text[0].get_rect()).height
     # 准备与鼠标检测的通信
-    mouse_test_q = queue.Queue(maxsize = 1)
+    mouse_test_q = queue.Queue(maxsize=1)
     # 创建线程
     choose_menu = threading.Thread(target=mouse_test, args=(get_operation, mouse_test_q, pygame_event))
     choose_menu.daemon = True
@@ -73,8 +79,7 @@ def menu(get_operation, push_windows, pygame_event):
         mouse_test_q.put((screen_height, how_many, two_space, height))
         screen.fill(bg_color, (0, screen_height/2.0, 140, screen_height/2.0))  # 用于后期做动画
         for i in range(how_many):
-            screen.blit(menu_text[i], (40, screen_height/2.0+(how_many-i)*(height+two_space)))
-
+            screen.blit(menu_text[i], (40, screen_height/2.0+i*(height+two_space)))
         pygame.display.update((0, screen_height/2.0, 140, screen_height/2.0))
 
 
@@ -82,30 +87,28 @@ def mouse_test(get_operation, mouse_test_q, pygame_event):
     flag_down = 0
     flag_up = 0
     while True:
+        if flag_up == flag_down:  # 防止二次触发
+            flag_down = 0
+            flag_up = 0
         screen_height, how_many, two_space, height = mouse_test_q.get()
         event = pygame_event.get()
         if event.type == pygame.MOUSEBUTTONDOWN:
             x, y = event.pos  # pygame.mouse.get_pos()
             for i in range(how_many):
-                if (40 < x < 140) and ((screen_height/2.0+(how_many-i)*(height+two_space)) < y < (screen_height/2.0
-                                                                                                      +
-                                                                                                      (how_many-i+1) *
-                                                                                                      (height+two_space))):
+                if (40 < x < 140) and ((screen_height/2.0+i*(height+two_space)) < y < (screen_height/2.0+(i+1)*(height+two_space))):
                     flag_down = i + 1
                     break
                 else:
                     flag_down = 0
         if event.type == pygame.MOUSEBUTTONUP:
-            x, y = event.pos  # pygame.mouse.get_pos()
+            x, y = event.pos
             for i in range(how_many):
-                if (40 < x < 140) and ((screen_height/2.0+(how_many-i)*(height+two_space)) < y < (screen_height/2.0 +
-                                                                                                      (how_many-i+1) *
-                                                                                                      (height+two_space))):
+                if (40 < x < 140) and ((screen_height/2.0+i*(height+two_space)) < y < (screen_height/2.0+(i+1)*(height+two_space))):
                     flag_up = i + 1
                     break
                 else:
                     flag_up = 0
-
+        # 由于生产者消费者的限制，必须生产一个
         if flag_up == flag_down:
             get_operation.put(int(flag_up))
         else:
