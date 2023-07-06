@@ -5,6 +5,7 @@ import queue
 from basesort.choice_0 import choice_0
 from basesort.selectsort import select_sort
 from basesort.insertsorting import insert_sort
+# from new_sort.heapsort import heap_sort
 
 
 def main():
@@ -22,6 +23,7 @@ def main():
     my_menu = threading.Thread(target=menu, args=(get_operation, push_windows, pygame_event))
     my_menu.daemon = True
     my_menu.start()
+    screen.get_rect()
     while True:
         event = pygame.event.wait()
         pygame_event.put(event)
@@ -51,6 +53,7 @@ def main():
             insert_sort(screen, bg_color)
         elif which_one == 4:
             print('4可以同')
+            # screen_size = heap_sort(screen, bg_color)
         # 区域刷新，目前仅有一块为菜单多线程刷新
         pygame.display.update([(140, 0, screen_width-140, screen_height), (0, 0, 140, screen_height/2.0)])
 
