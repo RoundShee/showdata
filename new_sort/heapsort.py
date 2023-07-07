@@ -13,6 +13,13 @@ from pardon import top_menu
 
 
 def heap_sort(screen, bg_color, num):
+    """
+    主要入口，使用它开启屏幕上下显示的线程。
+    :param screen:
+    :param bg_color:
+    :param num:
+    :return:
+    """
     left, top, screen_width, screen_height = screen.get_rect()
     screen_size = screen_width, screen_height
     # 顶部交互栏
@@ -77,6 +84,15 @@ def heapify(arr, the_end, the_begin, screen, bg_color, every_num_data_storage, q
 
 
 def heapsort_low(arr, screen, bg_color, q_t_size, animation_pause):
+    """
+    不断的将大顶堆最大值下沉，完成排序
+    :param arr: 要排序的数组
+    :param screen: 屏幕参数
+    :param bg_color: 背景颜色
+    :param q_t_size: 接收实时窗口数据
+    :param animation_pause: 接收是否暂停的ThreadEvent对象
+    :return: 等我写完上一级用户怎么输入，再研究怎么返回
+    """
     n = len(arr)
     # 初始化对象列表-原始显示
     screen, screen_width, screen_height = q_t_size.get()  # 首次get
@@ -109,6 +125,14 @@ def heapsort_low(arr, screen, bg_color, q_t_size, animation_pause):
 
 
 def wait_dead_loop(animation_pause, q_t_size, num, every_num_data_storage):
+    """
+    用于暂停，并且不断接收q_t_size的数据防止卡死
+    :param animation_pause: ThreadEvent对象
+    :param q_t_size: 用于接收窗口实时数据
+    :param num: 用于给内部刷新屏幕的函数传参
+    :param every_num_data_storage: 和上面一样
+    :return: 不返回
+    """
     wait_or_run = not(animation_pause.is_set())
     bg_color = (230, 230, 230)
     while wait_or_run:
