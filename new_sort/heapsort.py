@@ -3,6 +3,7 @@ import sys
 import pygame
 import threading
 import math
+from pardon import top_menu
 
 
 """
@@ -14,27 +15,20 @@ import math
 def heap_sort(screen, bg_color, num):
     left, top, screen_width, screen_height = screen.get_rect()
     screen_size = screen_width, screen_height
+    # 顶部交互栏
+    top_menu_q = queue.Queue(maxsize=1)
+    event_send = queue.Queue(maxsize=1)
+    animation_pause = threading.Event()
+    top_menu_thread = threading.Thread(target=top_menu, args=(bg_color, top_menu_q, event_send, animation_pause))
+    top_menu_thread.daemon = True
+    # 下部界面
     q_t_size = queue.Queue(maxsize=1)
-    heapsort_dis = threading.Thread(target=heapsort_low, args=(num, screen, bg_color, q_t_size))
+    heapsort_dis = threading.Thread(target=heapsort_low, args=(num, screen, bg_color, q_t_size, animation_pause))
     heapsort_dis.daemon = True
+    # 线程启动
+    top_menu_thread.start()
     heapsort_dis.start()
     while True:
-        '''
-        event = pygame.event.wait()
-        if event.type == pygame.QUIT:
-            sys.exit()
-        if event.type == pygame.VIDEORESIZE:
-            # 重新获取当前大小
-            screen_size = event.size
-            # 重设
-            screen = pygame.display.set_mode(screen_size, pygame.RESIZABLE, 32)
-        screen_width, screen_height = screen_size
-        q_t_size.put((screen_width, screen_height))
-        #screen.fill(bg_color)
-        #every_num_data_storage = resolve_position_or_init(screen_width, screen_height, num)
-        #draw_heaps(screen, bg_color, every_num_data_storage)
-        #pygame.display.update()
-        '''
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
@@ -43,13 +37,16 @@ def heap_sort(screen, bg_color, num):
                 screen_size = event.size
                 # 重设
                 screen = pygame.display.set_mode(screen_size, pygame.RESIZABLE, 32)
-        screen_width, screen_height = screen_size
-        q_t_size.put((screen, screen_width, screen_height))
+            screen_width, screen_height = screen_size
+            top_menu_q.put((screen, screen_width, screen_height))  # top_menu
+            event_send.put(event)  # 用于鼠标检测
+        q_t_size.put((screen, screen_width, screen_height))  # 发送给下部动画显示
 
 
-def heapify(arr, the_end, the_begin, screen, bg_color, every_num_data_storage, q_t_size):
+def heapify(arr, the_end, the_begin, screen, bg_color, every_num_data_storage, q_t_size, animation_pause):
     """
     维护大顶堆的性质，前三个为基本参数，后三个用于线程通信
+    :param animation_pause: 用于暂停
     :param arr: 数组-原始数据
     :param the_end: 维护到的位置，下标
     :param the_begin: 开始维护的位置，如果实现大顶堆，需要从头维护
@@ -59,6 +56,7 @@ def heapify(arr, the_end, the_begin, screen, bg_color, every_num_data_storage, q
     :param q_t_size:
     :return:
     """
+    wait_dead_loop(animation_pause, q_t_size, arr, every_num_data_storage)
     screen, screen_width, screen_height = q_t_size.get()
     largest = the_begin
     l_son = 2 * the_begin + 1
@@ -68,46 +66,58 @@ def heapify(arr, the_end, the_begin, screen, bg_color, every_num_data_storage, q
     if r_son < the_end and arr[largest] < arr[r_son]:
         largest = r_son
     if largest != the_begin:
-        circle_x, circle_y, temp = every_num_data_storage[the_begin].circle_x, every_num_data_storage[the_begin].circle_y, (every_num_data_storage[the_begin].lf_connect, every_num_data_storage[the_begin].rt_connect, every_num_data_storage[the_begin].label_num)
-        every_num_data_storage[the_begin].change_position(every_num_data_storage[largest].circle_x, every_num_data_storage[largest].circle_y, (every_num_data_storage[largest].lf_connect, every_num_data_storage[largest].rt_connect, every_num_data_storage[largest].label_num))
-        every_num_data_storage[largest].change_position(circle_x, circle_y, temp)
-        every_num_data_storage[largest], every_num_data_storage[the_begin] = every_num_data_storage[the_begin], every_num_data_storage[largest]
+        simply_sawp(screen, bg_color, arr, every_num_data_storage, the_begin, largest, q_t_size, animation_pause)
         arr[the_begin], arr[largest] = arr[largest], arr[the_begin]
-        screen.fill(bg_color)
+        screen.fill(bg_color, (0, 30, screen_width, screen_height - 30))  # 只管底下
         every_num_data_storage = resolve_position_or_init(screen_width, screen_height, arr, 1, every_num_data_storage)
         draw_heaps(screen, bg_color, every_num_data_storage)
-        pygame.display.update()
-        heapify(arr, the_end, largest, screen, bg_color, every_num_data_storage, q_t_size)
+        pygame.display.update([(0, 30, screen_width, screen_height - 30)])  # 只管底下
+        wait_dead_loop(animation_pause, q_t_size, arr, every_num_data_storage)
+        heapify(arr, the_end, largest, screen, bg_color, every_num_data_storage, q_t_size, animation_pause)
 
 
-def heapsort_low(arr, screen, bg_color, q_t_size):
+def heapsort_low(arr, screen, bg_color, q_t_size, animation_pause):
     n = len(arr)
-    # 初始化对象列表
-    screen, screen_width, screen_height = q_t_size.get()
+    # 初始化对象列表-原始显示
+    screen, screen_width, screen_height = q_t_size.get()  # 首次get
+    screen.fill(bg_color, (0, 30, screen_width, screen_height - 30))  # 只管底下
     every_num_data_storage = resolve_position_or_init(screen_width, screen_height, arr)
+    draw_heaps(screen, bg_color, every_num_data_storage)
+    pygame.display.update([(0, 30, screen_width, screen_height - 30)])  # 只管底下
+    wait_dead_loop(animation_pause, q_t_size, arr, every_num_data_storage)
     for i in range(n // 2 - 1, -1, -1):  # 首次维护
-        heapify(arr, n, i, screen, bg_color, every_num_data_storage, q_t_size)
+        heapify(arr, n, i, screen, bg_color, every_num_data_storage, q_t_size, animation_pause)
     for i in range(n - 1, 0, -1):  # 将最大的放入最后 再维护
         arr[i], arr[0] = arr[0], arr[i]
-        circle_x, circle_y, temp = every_num_data_storage[0].circle_x, every_num_data_storage[0].circle_y, (every_num_data_storage[0].lf_connect, every_num_data_storage[0].rt_connect, every_num_data_storage[0].label_num)
-        every_num_data_storage[0].change_position(every_num_data_storage[i].circle_x, every_num_data_storage[i].circle_y, (every_num_data_storage[i].lf_connect, every_num_data_storage[i].rt_connect, every_num_data_storage[i].label_num))
-        every_num_data_storage[i].change_position(circle_x, circle_y, temp)
-        every_num_data_storage[i], every_num_data_storage[0] = every_num_data_storage[0], every_num_data_storage[i]
-        heapify(arr, i, 0, screen, bg_color, every_num_data_storage, q_t_size)
-        every_num_data_storage[i].done_sort(every_num_data_storage)
-        screen.fill(bg_color)
+        simply_sawp(screen, bg_color, arr, every_num_data_storage, i, 0, q_t_size, animation_pause)  # 交换动画
+        heapify(arr, i, 0, screen, bg_color, every_num_data_storage, q_t_size, animation_pause)
+        every_num_data_storage[i].done_sort(every_num_data_storage)  # 完成金色显示
+        screen.fill(bg_color)  # 刷新
         draw_heaps(screen, bg_color, every_num_data_storage)
-        pygame.display.update()
-    every_num_data_storage[0].done_sort(every_num_data_storage)
-    screen.fill(bg_color)
+        pygame.display.update([(0, 30, screen_width, screen_height - 30)])  # 只管底下
+    every_num_data_storage[0].done_sort(every_num_data_storage)  # 顶头刷新
+    screen.fill(bg_color, (0, 30, screen_width, screen_height - 30))  # 只管底下
     draw_heaps(screen, bg_color, every_num_data_storage)
-    pygame.display.update()
+    pygame.display.update([(0, 30, screen_width, screen_height - 30)])  # 只管底下
     while True:
+        wait_dead_loop(animation_pause, q_t_size, arr, every_num_data_storage)
         screen, screen_width, screen_height = q_t_size.get()
         resolve_position_or_init(screen_width, screen_height, arr, 1, every_num_data_storage)
-        screen.fill(bg_color)
+        screen.fill(bg_color, (0, 30, screen_width, screen_height - 30))  # 只管底下
         draw_heaps(screen, bg_color, every_num_data_storage)
-        pygame.display.update()
+        pygame.display.update([(0, 30, screen_width, screen_height - 30)])  # 只管底下
+
+
+def wait_dead_loop(animation_pause, q_t_size, num, every_num_data_storage):
+    wait_or_run = not(animation_pause.is_set())
+    bg_color = (230, 230, 230)
+    while wait_or_run:
+        screen, screen_width, screen_height = q_t_size.get()
+        every_num_data_storage = resolve_position_or_init(screen_width, screen_height, num, 1, every_num_data_storage)
+        screen.fill(bg_color, (0, 30, screen_width, screen_height - 30))  # 只管底下
+        draw_heaps(screen, bg_color, every_num_data_storage)
+        pygame.display.update([(0, 30, screen_width, screen_height - 30)])  # 只管底下
+        wait_or_run = not(animation_pause.is_set())
 
 
 def resolve_position_or_init(screen_width, screen_height, num, just_change_position=0, every_num_data_storage=None):
@@ -179,6 +189,37 @@ def resolve_position_or_init(screen_width, screen_height, num, just_change_posit
         return every_num_data_storage
 
 
+def simply_sawp(screen, bg_color, num, every_num_data_storage, i, j, q_t_size, animation_pause):
+    wait_dead_loop(animation_pause, q_t_size, num, every_num_data_storage)
+    screen, screen_width, screen_height = q_t_size.get()
+    step_x = (every_num_data_storage[i].circle_x - every_num_data_storage[j].circle_x)/10
+    step_y = (every_num_data_storage[i].circle_y - every_num_data_storage[j].circle_y)/10
+    every_num_data_storage[i].change_color('GREEN')
+    every_num_data_storage[j].change_color('GREEN')
+    storage_for_i = (every_num_data_storage[i].lf_connect, every_num_data_storage[i].rt_connect, i)
+    storage_for_j = (every_num_data_storage[j].lf_connect, every_num_data_storage[j].rt_connect, j)
+    for k in range(1, 11):
+        every_num_data_storage[i].change_position(every_num_data_storage[i].circle_x - step_x,
+                                                  every_num_data_storage[i].circle_y - step_y, (0, 0, j))
+        every_num_data_storage[j].change_position(every_num_data_storage[j].circle_x + step_x,
+                                                  every_num_data_storage[j].circle_y + step_y, (0, 0, i))
+        screen.fill(bg_color, (0, 30, screen_width, screen_height - 30))  # 只管底下
+        draw_heaps(screen, bg_color, every_num_data_storage)
+        # pygame.time.delay(10)
+        pygame.display.update([(0, 30, screen_width, screen_height - 30)])  # 只管底下
+    # 到位后重新连接交换孩子，交换数组位置
+    every_num_data_storage[i].change_position(every_num_data_storage[i].circle_x, every_num_data_storage[i].circle_y,
+                                              storage_for_j)
+    every_num_data_storage[j].change_position(every_num_data_storage[j].circle_x, every_num_data_storage[j].circle_y,
+                                              storage_for_i)
+    every_num_data_storage[i], every_num_data_storage[j] = every_num_data_storage[j], every_num_data_storage[i]
+    every_num_data_storage[i].change_color('GREY')
+    every_num_data_storage[j].change_color('GREY')
+    screen.fill(bg_color, (0, 30, screen_width, screen_height - 30))  # 只管底下
+    draw_heaps(screen, bg_color, every_num_data_storage)
+    pygame.display.update([(0, 30, screen_width, screen_height - 30)])  # 只管底下
+
+
 def draw_heaps(screen, bg_color, every_num_data_storage):
     """
     将HeapCircle类对象列表全部blit到屏幕，先画线，再画实心圆，再画填充背景圆，再填数字
@@ -234,6 +275,12 @@ class HeapCircle:
             every_num_data_storage[father_label].lose_child(1)
         else:
             every_num_data_storage[father_label].lose_child(2)
+
+    def change_color(self, str_color):
+        if str_color == 'GREEN':
+            self.color = (0, 205, 0)
+        elif str_color == 'GREY':
+            self.color = (230, 230, 230)
 
     def done_sort(self, every_num_data_storage):
         """完成排序变色，断开连接"""
