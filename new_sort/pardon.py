@@ -17,6 +17,8 @@ def top_menu(bg_color, top_menu_q, event_send, animation_pause):
     im_finish_red = pygame.image.load('../misc/finish_red.png')
     im_pause = pygame.image.load('../misc/pause.png')
     im_start = pygame.image.load('../misc/start_button.png')
+    im_start_grey = pygame.image.load('../misc/start_grey.png')
+    im_pause_grey = pygame.image.load('../misc/pause_grey.png')
     button_size = 30
     buttons = [im_start, im_pause, im_finish_red]
     # 事件必须是有才能触发，影响动画刷新，因此再开一个线程
@@ -27,6 +29,10 @@ def top_menu(bg_color, top_menu_q, event_send, animation_pause):
         # 动画显示
         screen, screen_width, screen_height = top_menu_q.get()
         screen.fill(bg_color, rect=(0, 0, screen_width, button_size))
+        if animation_pause.is_set():
+            buttons = [im_start_grey, im_pause, im_finish_red]
+        elif not animation_pause.is_set():
+            buttons = [im_start, im_pause_grey, im_finish_red]
         for i in range(3):
             screen.blit(buttons[i], (button_size*i, 0))
         pygame.display.update([(0, 0, screen_width, button_size)])
