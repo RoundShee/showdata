@@ -144,18 +144,15 @@ def response_for_get_num(get_num_event, is_gene, is_done, is_back):
                     except ValueError:
                         # 输入不是有效的浮点数
                         pass
+            elif event.key == pygame.K_RETURN and numbers:
+                # Enter 键
+                is_done.set()
+            elif event.key == pygame.K_ESCAPE:
+                # 退出到主菜单的返回值
+                is_back.set()
             else:
                 # 其他按键
                 input_text += event.unicode
-            '''
-            elif event.key == pygame.K_RETURN:
-                # Enter 键
-                if numbers:
-                    return numbers
-            elif event.key == pygame.K_ESCAPE:
-                # 退出到主菜单的返回值
-                return -1
-            '''
         if is_gene.is_set() and event.type == pygame.KEYDOWN:
             if event.key == pygame.K_BACKSPACE:
                 # 退格键
@@ -165,6 +162,12 @@ def response_for_get_num(get_num_event, is_gene, is_done, is_back):
             elif event.key in [pygame.K_0, pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6,
                                pygame.K_7, pygame.K_8, pygame.K_9]:
                 input_text += event.unicode
+            elif event.key == pygame.K_RETURN and numbers:
+                # Enter 键
+                is_done.set()
+            elif event.key == pygame.K_ESCAPE:
+                # 退出到主菜单的返回值
+                is_back.set()
             else:
                 pass
             try:
@@ -184,8 +187,8 @@ def get_num_below(queue_below_get, is_gene):
     bg_color = (230, 230, 230)
     global input_text, numbers  # 全局通信变量，只读取
     font_num = pygame.font.Font('./misc/Alimama_DongFangDaKai_Regular.ttf', 20)
-    tips_1 = font_num.render('说明：输入数字按下空格加入序列，回车进入排序', True, (1, 1, 1, 100))
-    tips_2 = font_num.render('说明：输入生成个数即可，回车进入排序', True, (1, 1, 1, 100))
+    tips_1 = font_num.render('说明：输入数字按下空格加入序列，回车或开始按钮进入排序', True, (1, 1, 1, 100))
+    tips_2 = font_num.render('说明：输入生成个数即可，回车或开始按钮进入排序', True, (1, 1, 1, 100))
     while True:
         screen, screen_width, screen_height = queue_below_get.get()
         if not is_gene.is_set():  # 不是自动生成，是手动输入
