@@ -25,11 +25,11 @@ def get_num(screen, num=None):
     left, top, screen_width, screen_height = screen.get_rect()
     screen_size = screen_width, screen_height
     # 顶部按钮选择加载
-    im_checked = pygame.image.load('./misc/checked.png')
-    im_unchecked = pygame.image.load('./misc/unchecked.png')
-    im_start_green = pygame.image.load('./misc/start_button.png')
-    im_start_grey = pygame.image.load('./misc/start_grey.png')
-    im_back = pygame.image.load('./misc/back.png')
+    im_checked = pygame.image.load('./misc/checked.png').convert_alpha()
+    im_unchecked = pygame.image.load('./misc/unchecked.png').convert_alpha()
+    im_start_green = pygame.image.load('./misc/start_button.png').convert_alpha()
+    im_start_grey = pygame.image.load('./misc/start_grey.png').convert_alpha()
+    im_back = pygame.image.load('./misc/back.png').convert_alpha()
     button_size = 30
     text_font = pygame.font.Font('./misc/Alimama_DongFangDaKai_Regular.ttf', 18)
     text_user = text_font.render('手动输入', True, (0, 0, 0))

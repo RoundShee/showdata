@@ -13,17 +13,17 @@ def top_menu(bg_color, top_menu_q, event_send, animation_pause, heap_restart, sp
     :param event_send: 鼠标事件检测
     :return:
     """
-    im_finish_red = pygame.image.load('./misc/finish_red.png')
-    im_pause = pygame.image.load('./misc/pause.png')
-    im_start = pygame.image.load('./misc/start_button.png')
-    im_start_grey = pygame.image.load('./misc/start_grey.png')
-    im_pause_grey = pygame.image.load('./misc/pause_grey.png')
-    im_speed_up = pygame.image.load('./misc/speed_up.png')
-    im_speed_up_grey = pygame.image.load('./misc/speed_up_grey.png')
-    im_speed_mid = pygame.image.load('./misc/speed_mid.png')
-    im_speed_mid_grey = pygame.image.load('./misc/speed_mid_grey.png')
-    im_speed_down = pygame.image.load('./misc/speed_down.png')
-    im_speed_down_grey = pygame.image.load('./misc/speed_down_grey.png')
+    im_finish_red = pygame.image.load('./misc/finish_red.png').convert_alpha()
+    im_pause = pygame.image.load('./misc/pause.png').convert_alpha()
+    im_start = pygame.image.load('./misc/start_button.png').convert_alpha()
+    im_start_grey = pygame.image.load('./misc/start_grey.png').convert_alpha()
+    im_pause_grey = pygame.image.load('./misc/pause_grey.png').convert_alpha()
+    im_speed_up = pygame.image.load('./misc/speed_up.png').convert_alpha()
+    im_speed_up_grey = pygame.image.load('./misc/speed_up_grey.png').convert_alpha()
+    im_speed_mid = pygame.image.load('./misc/speed_mid.png').convert_alpha()
+    im_speed_mid_grey = pygame.image.load('./misc/speed_mid_grey.png').convert_alpha()
+    im_speed_down = pygame.image.load('./misc/speed_down.png').convert_alpha()
+    im_speed_down_grey = pygame.image.load('./misc/speed_down_grey.png').convert_alpha()
     button_size = 30
     buttons = [im_start, im_pause, im_finish_red]
     # 事件必须是有才能触发，影响动画刷新，因此再开一个线程
