@@ -5,7 +5,8 @@ import queue
 from basesort.choice_0 import choice_0
 from basesort.selectsort import select_sort
 from basesort.insertsorting import insert_sort
-# from new_sort.heapsort import heap_sort
+from new_sort.heapsort import heap_sort
+from new_sort.get_num import get_num
 
 
 def main():
@@ -52,8 +53,10 @@ def main():
             print('3可用')
             insert_sort(screen, bg_color)
         elif which_one == 4:
-            print('4可以同')
-            # screen_size = heap_sort(screen, bg_color)
+            while True:
+                num, screen = get_num(screen)
+                heap_sort(screen, bg_color, num)
+            
         # 区域刷新，目前仅有一块为菜单多线程刷新
         pygame.display.update([(140, 0, screen_width-140, screen_height), (0, 0, 140, screen_height/2.0)])
 

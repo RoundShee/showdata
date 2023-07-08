@@ -13,12 +13,12 @@ def top_menu(bg_color, top_menu_q, event_send, animation_pause):
     :param event_send: 鼠标事件检测
     :return:
     """
-    im_finish_grey = pygame.image.load('../misc/finish_grey.png')
-    im_finish_red = pygame.image.load('../misc/finish_red.png')
-    im_pause = pygame.image.load('../misc/pause.png')
-    im_start = pygame.image.load('../misc/start_button.png')
-    im_start_grey = pygame.image.load('../misc/start_grey.png')
-    im_pause_grey = pygame.image.load('../misc/pause_grey.png')
+    im_finish_grey = pygame.image.load('./misc/finish_grey.png')
+    im_finish_red = pygame.image.load('./misc/finish_red.png')
+    im_pause = pygame.image.load('./misc/pause.png')
+    im_start = pygame.image.load('./misc/start_button.png')
+    im_start_grey = pygame.image.load('./misc/start_grey.png')
+    im_pause_grey = pygame.image.load('./misc/pause_grey.png')
     button_size = 30
     buttons = [im_start, im_pause, im_finish_red]
     # 事件必须是有才能触发，影响动画刷新，因此再开一个线程

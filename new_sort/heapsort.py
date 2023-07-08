@@ -3,7 +3,7 @@ import sys
 import pygame
 import threading
 import math
-from pardon import top_menu
+from new_sort.pardon import top_menu
 
 
 """
@@ -351,4 +351,4 @@ def test():
     heap_sort(screen, bg_color, num)
 
 
-test()
+#test()
