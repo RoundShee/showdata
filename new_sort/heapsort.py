@@ -26,11 +26,19 @@ def heap_sort(screen, bg_color, num):
     top_menu_q = queue.Queue(maxsize=1)
     event_send = queue.Queue(maxsize=1)
     animation_pause = threading.Event()
-    top_menu_thread = threading.Thread(target=top_menu, args=(bg_color, top_menu_q, event_send, animation_pause))
+    speed_0 = threading.Event()
+    speed_1 = threading.Event()
+    speed_2 = threading.Event()
+    speed_event = [speed_0, speed_1, speed_2]
+    speed_1.set()
+    heap_restart = threading.Event()
+    top_menu_thread = threading.Thread(target=top_menu, args=(bg_color, top_menu_q, event_send, animation_pause,
+                                                              heap_restart, speed_event))
     top_menu_thread.daemon = True
     # 下部界面
     q_t_size = queue.Queue(maxsize=1)
-    heapsort_dis = threading.Thread(target=heapsort_low, args=(num, screen, bg_color, q_t_size, animation_pause))
+    heapsort_dis = threading.Thread(target=heapsort_low, args=(num, screen, bg_color, q_t_size, animation_pause,
+                                                               speed_event))
     heapsort_dis.daemon = True
     # 线程启动
     top_menu_thread.start()
@@ -48,11 +56,14 @@ def heap_sort(screen, bg_color, num):
             top_menu_q.put((screen, screen_width, screen_height))  # top_menu
             event_send.put(event)  # 用于鼠标检测
         q_t_size.put((screen, screen_width, screen_height))  # 发送给下部动画显示
+        if heap_restart.is_set():
+            return 1
 
 
-def heapify(arr, the_end, the_begin, screen, bg_color, every_num_data_storage, q_t_size, animation_pause):
+def heapify(arr, the_end, the_begin, screen, bg_color, every_num_data_storage, q_t_size, animation_pause, speed_event):
     """
     维护大顶堆的性质，前三个为基本参数，后三个用于线程通信
+    :param speed_event:
     :param animation_pause: 用于暂停
     :param arr: 数组-原始数据
     :param the_end: 维护到的位置，下标
@@ -73,19 +84,21 @@ def heapify(arr, the_end, the_begin, screen, bg_color, every_num_data_storage, q
     if r_son < the_end and arr[largest] < arr[r_son]:
         largest = r_son
     if largest != the_begin:
-        simply_sawp(screen, bg_color, arr, every_num_data_storage, the_begin, largest, q_t_size, animation_pause)
+        simply_sawp(screen, bg_color, arr, every_num_data_storage, the_begin, largest, q_t_size, animation_pause,
+                    speed_event)
         arr[the_begin], arr[largest] = arr[largest], arr[the_begin]
         screen.fill(bg_color, (0, 30, screen_width, screen_height - 30))  # 只管底下
         every_num_data_storage = resolve_position_or_init(screen_width, screen_height, arr, 1, every_num_data_storage)
         draw_heaps(screen, bg_color, every_num_data_storage)
         pygame.display.update([(0, 30, screen_width, screen_height - 30)])  # 只管底下
         wait_dead_loop(animation_pause, q_t_size, arr, every_num_data_storage)
-        heapify(arr, the_end, largest, screen, bg_color, every_num_data_storage, q_t_size, animation_pause)
+        heapify(arr, the_end, largest, screen, bg_color, every_num_data_storage, q_t_size, animation_pause, speed_event)
 
 
-def heapsort_low(arr, screen, bg_color, q_t_size, animation_pause):
+def heapsort_low(arr, screen, bg_color, q_t_size, animation_pause, speed_event):
     """
     不断的将大顶堆最大值下沉，完成排序
+    :param speed_event: 用于调节动画速度
     :param arr: 要排序的数组
     :param screen: 屏幕参数
     :param bg_color: 背景颜色
@@ -102,11 +115,11 @@ def heapsort_low(arr, screen, bg_color, q_t_size, animation_pause):
     pygame.display.update([(0, 30, screen_width, screen_height - 30)])  # 只管底下
     wait_dead_loop(animation_pause, q_t_size, arr, every_num_data_storage)
     for i in range(n // 2 - 1, -1, -1):  # 首次维护
-        heapify(arr, n, i, screen, bg_color, every_num_data_storage, q_t_size, animation_pause)
+        heapify(arr, n, i, screen, bg_color, every_num_data_storage, q_t_size, animation_pause, speed_event)
     for i in range(n - 1, 0, -1):  # 将最大的放入最后 再维护
         arr[i], arr[0] = arr[0], arr[i]
-        simply_sawp(screen, bg_color, arr, every_num_data_storage, i, 0, q_t_size, animation_pause)  # 交换动画
-        heapify(arr, i, 0, screen, bg_color, every_num_data_storage, q_t_size, animation_pause)
+        simply_sawp(screen, bg_color, arr, every_num_data_storage, i, 0, q_t_size, animation_pause, speed_event)  # 交换动画
+        heapify(arr, i, 0, screen, bg_color, every_num_data_storage, q_t_size, animation_pause, speed_event)
         every_num_data_storage[i].done_sort(every_num_data_storage)  # 完成金色显示
         screen.fill(bg_color)  # 刷新
         draw_heaps(screen, bg_color, every_num_data_storage)
@@ -213,7 +226,7 @@ def resolve_position_or_init(screen_width, screen_height, num, just_change_posit
         return every_num_data_storage
 
 
-def simply_sawp(screen, bg_color, num, every_num_data_storage, i, j, q_t_size, animation_pause):
+def simply_sawp(screen, bg_color, num, every_num_data_storage, i, j, q_t_size, animation_pause, speed_event):
     wait_dead_loop(animation_pause, q_t_size, num, every_num_data_storage)
     screen, screen_width, screen_height = q_t_size.get()
     step_x = (every_num_data_storage[i].circle_x - every_num_data_storage[j].circle_x)/10
@@ -229,7 +242,13 @@ def simply_sawp(screen, bg_color, num, every_num_data_storage, i, j, q_t_size, a
                                                   every_num_data_storage[j].circle_y + step_y, (0, 0, i))
         screen.fill(bg_color, (0, 30, screen_width, screen_height - 30))  # 只管底下
         draw_heaps(screen, bg_color, every_num_data_storage)
-        # pygame.time.delay(10)
+        if speed_event[0].is_set():
+            speed = 120
+        elif speed_event[1].is_set():
+            speed = 60
+        else:
+            speed = 1
+        pygame.time.delay(speed)
         pygame.display.update([(0, 30, screen_width, screen_height - 30)])  # 只管底下
     # 到位后重新连接交换孩子，交换数组位置
     every_num_data_storage[i].change_position(every_num_data_storage[i].circle_x, every_num_data_storage[i].circle_y,

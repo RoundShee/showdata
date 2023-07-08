@@ -29,16 +29,19 @@ def get_num(screen, num=None):
     im_unchecked = pygame.image.load('./misc/unchecked.png')
     im_start_green = pygame.image.load('./misc/start_button.png')
     im_start_grey = pygame.image.load('./misc/start_grey.png')
+    im_back = pygame.image.load('./misc/back.png')
     button_size = 30
     text_font = pygame.font.Font('./misc/Alimama_DongFangDaKai_Regular.ttf', 18)
     text_user = text_font.render('手动输入', True, (0, 0, 0))
     text_gene = text_font.render('自动生成', True, (0, 0, 0))
     text_start = text_font.render('进入排序', True, (0, 0, 0))
+    text_back = text_font.render('返回菜单', True, (0, 0, 0))
     # 鼠标检测准备
     is_done = threading.Event()  # 用于判断是否进入排序
+    is_back = threading.Event()  # 用于判断是否要返沪菜单
     is_gene = threading.Event()  # 用于判断是否选中自动生成
     get_num_event = queue.Queue(maxsize=1)
-    thread_response = threading.Thread(target=response_for_get_num, args=(get_num_event, is_gene, is_done))
+    thread_response = threading.Thread(target=response_for_get_num, args=(get_num_event, is_gene, is_done, is_back))
     thread_response.daemon = True
     # 下部显示线程
     queue_below_get = queue.Queue(maxsize=1)
@@ -60,19 +63,17 @@ def get_num(screen, num=None):
             get_num_event.put(event)  # 将事件同时推送给鼠标方向
             screen_width, screen_height = screen_size
         screen.fill(bg_color, rect=(0, 0, screen_width, button_size))
-        # screen.blit(im_checked, (0, 0))
-        # screen.blit(text_user, (30, 4))
-        # screen.blit(im_unchecked, (120, 0))
-        # screen.blit(text_gene, (150, 4))
         if not is_gene.is_set():
             im_buttons = [im_checked, text_user, im_unchecked, text_gene]
         elif is_gene.is_set():
             im_buttons = [im_unchecked, text_user, im_checked, text_gene]
-        if numbers:
+        if numbers:  # 开始按钮动态选择
             im_buttons.append(im_start_green)
         else:
             im_buttons.append(im_start_grey)
-        im_buttons.append(text_start)
+        im_buttons.append(text_start)  # 开始文字
+        im_buttons.append(im_back)  # 返回im
+        im_buttons.append(text_back)  # 返回文字
         for i in range(0, len(im_buttons), 2):  # 此处计算，四字长90
             screen.blit(im_buttons[i], (i/2*(30+90), 0))
             screen.blit(im_buttons[i+1], (i/2*(30+90)+30, 4))
@@ -80,10 +81,12 @@ def get_num(screen, num=None):
         queue_below_get.put((screen, screen_width, screen_height))  # 即时给下部显示
         # we are all died!
         if is_done.is_set():
-            return numbers, screen
+            return numbers, screen, 1
+        elif is_back.is_set():
+            return numbers, screen, 0
 
 
-def response_for_get_num(get_num_event, is_gene, is_done):
+def response_for_get_num(get_num_event, is_gene, is_done, is_back):
     global input_text, numbers  # 全局变量，用于写入
     # 按钮复用
     flag_down = 0
@@ -95,7 +98,7 @@ def response_for_get_num(get_num_event, is_gene, is_done):
             flag_up = 0
         if event.type == pygame.MOUSEBUTTONDOWN:
             x, y = event.pos  # pygame.mouse.get_pos()
-            for i in range(3):
+            for i in range(4):
                 if (i*(30+90) < x < i*(30+90)+30) and (0 < y < 30):
                     flag_down = i + 1
                     break
@@ -103,7 +106,7 @@ def response_for_get_num(get_num_event, is_gene, is_done):
                     flag_down = 0
         if event.type == pygame.MOUSEBUTTONUP:
             x, y = event.pos
-            for i in range(3):
+            for i in range(4):
                 if (i*(30+90) < x < i*(30+90)+30) and (0 < y < 30):
                     flag_up = i + 1
                     break
@@ -116,6 +119,8 @@ def response_for_get_num(get_num_event, is_gene, is_done):
             is_gene.set()
         elif flag_up == flag_down and flag_up == 3 and numbers:
             is_done.set()
+        elif flag_up == flag_down and flag_up == 4:
+            is_back.set()
         # 手动输入抄过来
         if not is_gene.is_set() and event.type == pygame.KEYDOWN:
             if event.key == pygame.K_BACKSPACE:

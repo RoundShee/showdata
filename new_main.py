@@ -53,9 +53,14 @@ def main():
             print('3可用')
             insert_sort(screen, bg_color)
         elif which_one == 4:
-            while True:
-                num, screen = get_num(screen)
-                heap_sort(screen, bg_color, num)
+            num = []
+            label = 1
+            while label:
+                num, screen, label = get_num(screen, num)
+                if not label:
+                    break
+                num_copy = num[:]
+                heap_sort(screen, bg_color, num_copy)
             
         # 区域刷新，目前仅有一块为菜单多线程刷新
         pygame.display.update([(140, 0, screen_width-140, screen_height), (0, 0, 140, screen_height/2.0)])
