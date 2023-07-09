@@ -85,7 +85,7 @@ def get_nums_display(screen, bg_color, numbers):
         且有接收已有numbers的功能，返回numbers的功能，可以重新对数据进行编辑
         具有退出编辑的信号返回-1，在choice_0用于退出子菜单"""
     clock = pygame.time.Clock()
-
+    screen_height = screen.get_height()
     # 数字显示
     font_num = pygame.font.Font('./misc/Alimama_DongFangDaKai_Regular.ttf', 20)
     input_text = ""
@@ -128,10 +128,10 @@ def get_nums_display(screen, bg_color, numbers):
 
         screen.fill(bg_color)
         text_surface = font_num.render("当前输入: " + input_text, True, (0, 0, 0))
-        screen.blit(text_surface, (10, 450))
+        screen.blit(text_surface, (10, screen_height-70))
 
         text_surface = font_num.render("已存序列: " + ", ".join(map(str, numbers)), True, (0, 0, 0))
-        screen.blit(text_surface, (10, 480))
+        screen.blit(text_surface, (10, screen_height-30))
         draw_bar(numbers, screen)
         # 刷新
         pygame.display.flip()
