@@ -25,7 +25,6 @@ def main():
     my_menu = threading.Thread(target=menu, args=(get_operation, push_windows, pygame_event))
     my_menu.daemon = True
     my_menu.start()
-    screen.get_rect()
     while True:
         for event in pygame.event.get():
             pygame_event.put(event)
