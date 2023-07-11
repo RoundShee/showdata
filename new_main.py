@@ -13,8 +13,10 @@ def main():
     # 默认大小
     screen_size = (1366, 768)
     screen_width, screen_height = screen_size
+    icon = pygame.image.load('./misc/icon.png')
     pygame.init()
     pygame.display.set_caption("排序可视化程序")
+    pygame.display.set_icon(icon)
     screen = pygame.display.set_mode(screen_size, pygame.RESIZABLE, 32)  # 可调节窗口
     bg_color = (230, 230, 230)
     push_windows = queue.Queue(maxsize=1)
