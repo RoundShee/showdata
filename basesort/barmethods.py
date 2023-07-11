@@ -110,8 +110,9 @@ def get_nums_display(screen, bg_color, numbers):
                         # 如果当前输入不为空，则将其作为一个新的数加入列表
                         try:
                             number = float(input_text)
-                            numbers.append(number)
-                            input_text = ""
+                            if number >= 0:
+                                numbers.append(number)
+                                input_text = ""
                         except ValueError:
                             # 输入不是有效的浮点数
                             pass
@@ -261,21 +262,21 @@ class Fritters:
         """向上还是向下移动"""
         if direction == 'UP':
             if self.shifted:  # 从下面直接插入序列
-                self.bar_y = self.bar_y - screen_height/2.0
+                self.bar_y = self.bar_y - screen_height/3
                 self.bar_rect = (self.bar_x, self.bar_y, self.bar_width, self.bar_height)
-                self.text_y = self.text_y - screen_height/2.0
+                self.text_y = self.text_y - screen_height/3
                 self.text_rect = (self.text_x, self.text_y, self.text_width, self.text_height)
             else:   # 开始的向上
-                self.bar_y = self.bar_y - screen_height / 4.0
+                self.bar_y = self.bar_y - screen_height / 6
                 self.bar_rect = (self.bar_x, self.bar_y, self.bar_width, self.bar_height)
-                self.text_y = self.text_y - screen_height / 4.0
+                self.text_y = self.text_y - screen_height / 6
                 self.text_rect = (self.text_x, self.text_y, self.text_width, self.text_height)
                 self.shifted = 1
         elif direction == 'DOWN':
             if self.shifted:
-                self.bar_y = self.bar_y + screen_height/2
+                self.bar_y = self.bar_y + screen_height/3
                 self.bar_rect = (self.bar_x, self.bar_y, self.bar_width, self.bar_height)
-                self.text_y = self.text_y + screen_height/2
+                self.text_y = self.text_y + screen_height/3
                 self.text_rect = (self.text_x, self.text_y, self.text_width, self.text_height)
             else:
                 print("ERROR")
